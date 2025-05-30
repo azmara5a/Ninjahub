@@ -187,3 +187,143 @@ if Settings.AutoCollect then
         end
     end)
 end
+-- GUI Servisi
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local LocalPlayer = Players.LocalPlayer
+
+-- GUI Oluştur
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "NinjaHubGUI"
+ScreenGui.ResetOnSpawn = false
+
+-- Ana Frame
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.Visible = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Name = "MainFrame"
+
+-- UI Corner
+local corner = Instance.new("UICorner", MainFrame)
+corner.CornerRadius = UDim.new(0, 12)
+
+-- Aç/Kapa Tuşu (Right Control)
+local UIS = game:GetService("UserInputService")
+UIS.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.RightControl then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- Sekmeler
+local TabHolder = Instance.new("Frame", MainFrame)
+TabHolder.Size = UDim2.new(0, 120, 1, 0)
+TabHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Instance.new("UICorner", TabHolder).CornerRadius = UDim.new(0, 10)
+
+-- Butonlar
+local function createTabButton(text, callback)
+    local btn = Instance.new("TextButton", TabHolder)
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.MouseButton1Click:Connect(callback)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    return btn
+end
+
+-- Panel alanı
+local Panel = Instance.new("Frame", MainFrame)
+Panel.Size = UDim2.new(1, -130, 1, -10)
+Panel.Position = UDim2.new(0, 130, 0, 5)
+Panel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 10)
+
+-- Tüm içeriği temizleme
+local function clearPanel()
+    for _, child in pairs(Panel:GetChildren()) do
+        if not child:IsA("UICorner") then
+            child:Destroy()
+        end
+    end
+end
+
+-- Fruit Radar Panel
+local function openFruitRadar()
+    clearPanel()
+
+    local scroll = Instance.new("ScrollingFrame", Panel)
+    scroll.Size = UDim2.new(1, 0, 1, 0)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, #Fruits * 30)
+    scroll.BackgroundTransparency = 1
+    scroll.ScrollBarThickness = 4
+
+    for _, fruit in pairs(Fruits) do
+        if table.find(Settings.FruitFilter, fruit.Rarity) then
+            local btn = Instance.new("TextButton", scroll)
+            btn.Size = UDim2.new(1, -10, 0, 30)
+            btn.Position = UDim2.new(0, 5, 0, (_ - 1) * 32)
+            btn.Text = fruit.Name .. " [" .. fruit.Rarity .. "]"
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+            btn.MouseButton1Click:Connect(function()
+                warn("Meyve seçildi: " .. fruit.Name)
+            end)
+        end
+    end
+end
+
+-- Island TP Panel
+local function openIslandTP()
+    clearPanel()
+
+    local scroll = Instance.new("ScrollingFrame", Panel)
+    scroll.Size = UDim2.new(1, 0, 1, 0)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, #Islands * 30)
+    scroll.BackgroundTransparency = 1
+    scroll.ScrollBarThickness = 4
+
+    for i, island in ipairs(Islands) do
+        local btn = Instance.new("TextButton", scroll)
+        btn.Size = UDim2.new(1, -10, 0, 30)
+        btn.Position = UDim2.new(0, 5, 0, (i - 1) * 32)
+        btn.Text = island
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+        btn.MouseButton1Click:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char:MoveTo(Vector3.new(math.random(100, 1000), 10, math.random(100, 1000)))
+                warn("Teleported to: " .. island .. " (Dummy Position)")
+            end
+        end)
+    end
+end
+
+-- Auto Collect Script
+if Settings.AutoCollect then
+    task.spawn(function()
+        while task.wait(5) do
+            for _, fruit in pairs(Fruits) do
+                if table.find(Settings.FruitFilter, fruit.Rarity) then
+                    warn("Auto Collect çalışıyor: " .. fruit.Name)
+                    -- Burada gerçek collect fonksiyonu yerleştirilebilir
+                end
+            end
+        end
+    end)
+end
+
+-- Sekmeleri Oluştur
+createTabButton("Fruit Radar", openFruitRadar)
+createTabButton("Island TP", openIslandTP)
